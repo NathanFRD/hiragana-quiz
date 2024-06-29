@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hiragana Quiz</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            text-align: center;
+            background-color: white;
+            padding: 30px;
+            border-radius: 25px; /* Coins arrondis */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+        #game-container::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            bottom: -5px;
+            left: -5px;
+            right: -5px;
+            background: linear-gradient(45deg, #6fb3ff, #d1eaff, #6fb3ff);
+            border-radius: 30px; /* Ajuste en fonction des coins arrondis */
+            z-index: -1;
+            filter: blur(10px);
+            opacity: 0.2; /* Opacité à 20% */
+            
+        }
+        h1 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+        #hiragana-card {
+            background-color: #4a90e2;
+            color: white;
+            font-size: 120px;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: background-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        @keyframes slideOutLeft {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(-100%); opacity: 0; }
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+            20%, 40%, 60%, 80% { transform: translateX(6px); }
+        }
+
+        #hiragana-card {
+            /* ... autres styles existants ... */
+            position: relative;
+            overflow: hidden;
+        }
+
+        #hiragana-card .hiragana {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 120px;
+            color: white;
+        }
+        #hiragana-card .hiragana.slide-out {
+            animation: slideOutLeft 0.8s forwards;
+        }
+
+        #hiragana-card .hiragana.slide-in {
+            animation: slideInRight 0.8s forwards;
+        }
+
+        #hiragana-card.shake {
+            animation: shake 0.8s;
+        }
+        #user-input {
+            font-size: 18px;
+            text-align: center;
+            padding: 10px 15px;
+            width: calc(100% - 30px);
+            border: 2px solid #4a90e2;
+            border-radius: 25px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        #user-input:focus {
+            border-color: #4a90e2;
+        }
+
+        @keyframes shakeInput {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        #user-input.shake {
+            animation: shakeInput 0.4s;
+        }
+
+        #stats-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: white; /* Fond blanc */
+            border-radius: 10px;
+        }
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        #end-message {
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            line-height: 1.4;
+        }
+        #incorrect-answers {
+            margin-top: 20px;
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        #incorrect-answers h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .incorrect-answer {
+            display: inline-flex;
+            justify-content: center;
+            gap: 10px;
+            width: 30%;
+            padding: 5px 0;
+            margin: 5px;
+        }
+        .incorrect-answer span {
+            font-size: 18px;
+
+        }
+        .hiragana {
+            color: #4a90e2;
+        }
+        .romaji {
+            color: #333;
+
+        }
+        #new-game-btn {
+            display: none;
+            margin: 20px auto 0;
+            padding: 15px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+
+        #new-game-btn:hover {
+            background-color: #357abd;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Hiragana Quiz</h1>
+        <div id="hiragana-card"></div>
+        <input type="text" id="user-input" placeholder="Enter romaji">
+        <div id="stats-container">
+            <div class="stat">
+                <span class="stat-label">Tries Left</span>
+                <span id="tries" class="stat-value">20</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Score</span>
+                <span id="score" class="stat-value">0/20</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Best Score</span>
+                <span id="best-score" class="stat-value">0</span>
+            </div>
+            
+        </div>
+        <div id="incorrect-answers" style="display:none;">
+            <h2>Incorrect Answers</h2>
+            <div id="incorrect-list"></div>
+        </div>
+        <button id="new-game-btn" style="display:none;">Let's try again!</button>
+    </div>
+
+    <script>
+        const hiraganaMap = {
+            'あ': 'a', 'い': 'i', 'う': 'u', 'え': 'e', 'お': 'o',
+            'か': 'ka', 'き': 'ki', 'く': 'ku', 'け': 'ke', 'こ': 'ko',
+            'さ': 'sa', 'し': 'shi', 'す': 'su', 'せ': 'se', 'そ': 'so',
+            'た': 'ta', 'ち': 'chi', 'つ': 'tsu', 'て': 'te', 'と': 'to',
+            'な': 'na', 'に': 'ni', 'ぬ': 'nu', 'ね': 'ne', 'の': 'no',
+            'は': 'ha', 'ひ': 'hi', 'ふ': 'fu', 'へ': 'he', 'ほ': 'ho',
+            'ま': 'ma', 'み': 'mi', 'む': 'mu', 'め': 'me', 'も': 'mo',
+            'や': 'ya', 'ゆ': 'yu', 'よ': 'yo',
+            'ら': 'ra', 'り': 'ri', 'る': 'ru', 'れ': 're', 'ろ': 'ro',
+            'わ': 'wa', 'を': 'wo', 'ん': 'n'
+        };
+
+        const hiraganaElement = document.getElementById('hiragana-card');
+        const userInput = document.getElementById('user-input');
+        const scoreElement = document.getElementById('score');
+        const triesElement = document.getElementById('tries');
+        const incorrectAnswersElement = document.getElementById('incorrect-answers');
+        const incorrectListElement = document.getElementById('incorrect-list');
+
+        let currentHiragana;
+        let score = 0;
+        let tries = 20;
+        let usedHiragana = [];
+        let incorrectAnswers = [];
+        let bestScore = 0;
+
+        function getRandomHiragana() {
+            const availableHiragana = Object.keys(hiraganaMap).filter(char => !usedHiragana.includes(char));
+            if (availableHiragana.length === 0) {
+                return null;  // All hiragana have been used
+            }
+            const randomIndex = Math.floor(Math.random() * availableHiragana.length);
+            return availableHiragana[randomIndex];
+        }
+
+        function newHiragana() {
+            if (tries > 0) {
+                const newHiragana = getRandomHiragana();
+                if (newHiragana === null) {
+                    endGame();
+                    return;
+                }
+
+                const oldHiraganaElement = document.querySelector('#hiragana-card .hiragana');
+                const newHiraganaElement = document.createElement('div');
+                newHiraganaElement.classList.add('hiragana', 'slide-in');
+                newHiraganaElement.textContent = newHiragana;
+
+                if (oldHiraganaElement) {
+                    oldHiraganaElement.remove();
+                }
+                hiraganaElement.appendChild(newHiraganaElement);
+
+                currentHiragana = newHiragana;
+                usedHiragana.push(currentHiragana);
+
+                hiraganaElement.style.backgroundColor = '#4a90e2';  // Reset to blue
+                userInput.value = '';
+                userInput.focus();
+            } else {
+                endGame();
+            }
+        }
+
+        function updateScore(correct) {
+            if (correct) {
+                score++;
+            } else {
+                incorrectAnswers.push({ hiragana: currentHiragana, romaji: hiraganaMap[currentHiragana] });
+            }
+            tries--;
+            scoreElement.textContent = `${score}/20`;
+            triesElement.textContent = tries;
+        }
+
+        function checkAnswer() {
+            const userAnswer = userInput.value.toLowerCase().trim();
+            if (userAnswer === '') {
+                // Optionnel : ajouter un effet visuel pour indiquer que la réponse est vide
+                userInput.classList.add('shake');
+                setTimeout(() => userInput.classList.remove('shake'), 500);
+                return; // Sortir de la fonction sans traiter la réponse
+            }
+
+            const correctAnswer = hiraganaMap[currentHiragana];
+            if (userAnswer === correctAnswer) {
+                hiraganaElement.style.backgroundColor = '#4CAF50';  // Green
+                const currentHiraganaElement = document.querySelector('#hiragana-card .hiragana');
+                if (currentHiraganaElement) {
+                    currentHiraganaElement.classList.remove('slide-in');
+                    currentHiraganaElement.classList.add('slide-out');
+                }
+                updateScore(true);
+                setTimeout(newHiragana, 500);
+            } else {
+                hiraganaElement.style.backgroundColor = '#F44336';  // Red
+                hiraganaElement.classList.add('shake');
+                updateScore(false);
+                setTimeout(() => {
+                    hiraganaElement.classList.remove('shake');
+                    newHiragana();
+                }, 500);
+            }
+        }
+
+        function endGame() {
+            const hiraganaContent = document.querySelector('#hiragana-card .hiragana');
+            if (hiraganaContent) {
+                hiraganaContent.remove();
+            }
+            hiraganaElement.style.backgroundColor = '#4a90e2';  // Reset to blue
+            userInput.style.display = 'none';
+            
+            let endMessage;
+            if (score <= 10) {
+                endMessage = "Keep studying, you'll get better! Ganbatte! 💪";
+            } else if (score <= 16) {
+                endMessage = "You're on the right track, keep up the good work! 👍";
+            } else {
+                endMessage = "Yoku yatta! Congrats! 🙌";
+            }
+
+            hiraganaElement.innerHTML = `<div id="end-message">${endMessage}</div>`;
+            triesElement.textContent = '0';
+
+            if (incorrectAnswers.length > 0) {
+                incorrectAnswersElement.style.display = 'block';
+                incorrectListElement.innerHTML = ''; // Clear previous incorrect answers
+                incorrectAnswers.forEach(answer => {
+                    const div = document.createElement('div');
+                    div.classList.add('incorrect-answer');
+                    div.innerHTML = `<span class="hiragana">${answer.hiragana}</span> <span class="romaji">${answer.romaji}</span>`;
+                    incorrectListElement.appendChild(div);
+
+                });
+            }
+
+            updateBestScore();
+
+            document.getElementById('new-game-btn').style.display = 'block';
+        }
+
+        function updateBestScore() {
+            if (score > bestScore) {
+                bestScore = score;
+                document.getElementById('best-score').textContent = bestScore;
+                localStorage.setItem('hiraganaQuizBestScore', bestScore);
+            }
+        }
+
+        userInput.addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        function resetGame() {
+            hiraganaElement.innerHTML = '';
+            score = 0;
+            tries = 20;
+            usedHiragana = [];
+            incorrectAnswers = [];
+            scoreElement.textContent = '0/20';
+            triesElement.textContent = '20';
+            userInput.style.display = 'block';
+            incorrectAnswersElement.style.display = 'none';
+            incorrectListElement.innerHTML = '';
+            document.getElementById('new-game-btn').style.display = 'none';
+            newHiragana();
+        }
+
+        document.getElementById('new-game-btn').addEventListener('click', resetGame);
+
+        // Charger le meilleur score et démarrer le jeu
+        bestScore = localStorage.getItem('hiraganaQuizBestScore') || 0;
+        document.getElementById('best-score').textContent = bestScore;
+
+        newHiragana();
+
+    </script>
+</body>
+</html>
